@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 """Convert Excel/CSV → YAML and auto‑create folders."""
+import sys, os
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
 import sys, pandas as pd, yaml
 from pathlib import Path
 
