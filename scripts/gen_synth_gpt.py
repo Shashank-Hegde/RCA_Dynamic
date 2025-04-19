@@ -57,15 +57,15 @@ def main(n_samples, ontology_path, out_dir):
     out_dir=pathlib.Path(out_dir); out_dir.mkdir(parents=True,exist_ok=True)
     train=open(out_dir/"train.jsonl","w"); val=open(out_dir/"val.jsonl","w")
     for i in tqdm(range(n_samples)):
-      resp = client.chat.completions.create(
-        model="gpt-4o-mini",
-        messages=[{"role": "system", "content": question}],
-        temperature=1
+        resp = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[{"role": "system", "content": question}],
+            temperature=1
         )
-      
-        j=json.loads(resp.choices[0].message.content)
-        j["uid"]=str(uuid.uuid4())[:8]
-        (val if i%10==0 else train).write(json.dumps(j)+"\n")
+        
+        j = json.loads(resp.choices[0].message.content)
+        j["uid"] = str(uuid.uuid4())[:8]
+        (val if i % 10 == 0 else train).write(json.dumps(j) + "\n")
     print("✅ synthetic saved to",out_dir)
 
 if __name__=="__main__":
