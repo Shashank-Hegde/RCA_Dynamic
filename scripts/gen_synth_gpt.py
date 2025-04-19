@@ -4,10 +4,18 @@ Generate long‑form dialogues with GPT‑4o‑mini.
 Set OPENAI_API_KEY env var first.
 """
 
-import sys, os
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+import sys
+import os
+import openai
+import yaml
+import json
+import random
+import uuid
+import argparse
+import pathlib
+from tqdm import tqdm
 
-import openai, yaml, json, random, uuid, argparse, pathlib
+
 from tqdm import tqdm
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
