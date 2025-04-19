@@ -25,15 +25,15 @@ You are simulating a patient in an online medical chat.
 2. Fill the JSON template *completely*. Use null for unknown fields.
 
 TEMPLATE:
-{
+{{
   "text": <paragraph>,
-  "extracted": {...},            // all variables in list below
+  "extracted": {{ ... }},            // all variables in list below
   "label_leaf_id": <pick ONE from {leaf_ids}>,
   "risk": <0‑1 urgency>
-}
+}}
 
 Variables to fill inside "extracted":
-{variables}
+- {variables}
 """
 
 VARIABLES = [
