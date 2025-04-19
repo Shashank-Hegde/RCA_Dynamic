@@ -3,6 +3,10 @@
 Simple demo to predict full paths for multiple patient inputs
 and show model logits (trace mode) for every symptom leaf.
 """
+
+import sys, os
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
 import json
 from symptom_net.extractor import extract
 from symptom_net.utils import dict_to_vec
