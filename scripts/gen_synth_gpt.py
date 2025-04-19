@@ -7,6 +7,7 @@ Set OPENAI_API_KEY env var first.
 import sys
 import os
 import openai
+from openai import OpenAI
 import yaml
 import json
 import random
@@ -18,6 +19,7 @@ from tqdm import tqdm
 
 from tqdm import tqdm
 openai.api_key = os.getenv("OPENAI_API_KEY")
+client = OpenAI()
 
 PROMPT = """
 You are simulating a patient in an online medical chat.
@@ -55,10 +57,12 @@ def main(n_samples, ontology_path, out_dir):
     out_dir=pathlib.Path(out_dir); out_dir.mkdir(parents=True,exist_ok=True)
     train=open(out_dir/"train.jsonl","w"); val=open(out_dir/"val.jsonl","w")
     for i in tqdm(range(n_samples)):
-        resp=openai.ChatCompletion.create(
-                model="gpt-4o-mini",
-                messages=[{"role":"system","content":question}],
-                temperature=1)
+      resp = client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[{"role": "system", "content": question}],
+        temperature=1
+        )
+      
         j=json.loads(resp.choices[0].message.content)
         j["uid"]=str(uuid.uuid4())[:8]
         (val if i%10==0 else train).write(json.dumps(j)+"\n")
