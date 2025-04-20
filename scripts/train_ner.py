@@ -4,8 +4,9 @@ import spacy
 import json
 import pathlib
 import argparse
-import subprocess
 from spacy.tokens import DocBin
+from spacy.training import Example
+from spacy.util import minibatch
 
 ALL_LABELS = [
     "AGE", "SEX", "ETHNICITY", "LOCATION", "REGION", "SOCIOECONOMIC_STATUS",
@@ -16,8 +17,8 @@ ALL_LABELS = [
     "ENVIRONMENTAL_EXPOSURE", "HOUSING", "CLEAN_WATER", "OCCUPATION"
 ]
 
-def jsonl_to_docbin(path, nlp):
-    db = DocBin()
+def jsonl_to_examples(path, nlp):
+    examples = []
     for line in open(path):
         j = json.loads(line)
         doc = nlp.make_doc(j["text"])
@@ -37,73 +38,10 @@ def jsonl_to_docbin(path, nlp):
             if span and not any(span.start < s.end and s.start < span.end for s in spans):
                 spans.append(span)
         doc.ents = spans
-        db.add(doc)
-    return db
+        examples.append(Example.from_dict(doc, {"entities": [(ent.start_char, ent.end_char, ent.label_) for ent in doc.ents]}))
+    return examples
 
-def make_config(output):
-    cfg = """
-[paths]
-train = \"models/extractor_ner/train.spacy\"
-dev = \"models/extractor_ner/val.spacy\"
-
-[system]
-gpu_allocator = \"pytorch\"
-seed = 42
-
-[nlp]
-lang = \"en\"
-pipeline = [\"tok2vec\", \"ner\"]
-batch_size = 128
-
-[components]
-
-[components.tok2vec]
-factory = \"tok2vec\"
-
-[components.tok2vec.model]
-@architectures = \"spacy.Tok2Vec.v2\"
-
-[components.tok2vec.model.embed]
-@layers = \"HashEmbed.v1\"
-nO = 96
-nV = 20000
-
-[components.tok2vec.model.encode]
-@layers = \"chain.v1\"
-encode = [
-    [\"expand_window.v1\", {\"window_size\": 1}],
-    [\"Maxout.v1\", {\"nO\": 96, \"nP\": 3}]
-]
-
-[components.ner]
-factory = \"ner\"
-
-[corpora]
-
-[corpora.train]
-@readers = \"spacy.Corpus.v1\"
-path = \"models/extractor_ner/train.spacy\"
-
-[corpora.dev]
-@readers = \"spacy.Corpus.v1\"
-path = \"models/extractor_ner/val.spacy\"
-
-[training]
-train_corpus = \"corpora.train\"
-dev_corpus = \"corpora.dev\"
-max_epochs = 10
-dropout = 0.1
-patience = 5
-seed = 42
-gpu_allocator = \"pytorch\"
-
-[training.optimizer]
-@optimizers = \"Adam.v1\"
-learn_rate = 0.00005
-"""
-    (output / "config.cfg").write_text(cfg)
-
-def main(train_jsonl, val_jsonl, out_dir):
+def train_ner_model(train_path, val_path, out_dir):
     out_dir = pathlib.Path(out_dir)
     out_dir.mkdir(exist_ok=True, parents=True)
     nlp = spacy.blank("en")
@@ -111,28 +49,19 @@ def main(train_jsonl, val_jsonl, out_dir):
     for lbl in ALL_LABELS:
         ner.add_label(lbl)
 
-    print(f"\u2139 Converting JSONL to .spacy format …")
-    db_train = jsonl_to_docbin(train_jsonl, nlp)
-    db_train.to_disk(out_dir / "train.spacy")
-    db_val = jsonl_to_docbin(val_jsonl, nlp)
-    db_val.to_disk(out_dir / "val.spacy")
+    train_data = jsonl_to_examples(train_path, nlp)
+    val_data = jsonl_to_examples(val_path, nlp)
 
-    print(f"\u2139 Writing config file to {out_dir/'config.cfg'} …")
-    make_config(out_dir)
+    optimizer = nlp.begin_training()
+    for epoch in range(10):
+        losses = {}
+        batches = minibatch(train_data, size=8)
+        for batch in batches:
+            nlp.update(batch, drop=0.3, losses=losses)
+        print(f"Epoch {epoch+1} Losses: {losses}")
 
-    print(f"\u2139 Starting spaCy NER training on CPU")
-    try:
-        subprocess.run([
-            "python", "-m", "spacy", "train",
-            str(out_dir / "config.cfg"),
-            "--output", str(out_dir),
-            "--paths.train", str(out_dir / "train.spacy"),
-            "--paths.dev", str(out_dir / "val.spacy"),
-            "--gpu-id", "-1"
-        ], check=True)
-    except subprocess.CalledProcessError as e:
-        print("✘ spaCy training failed.")
-        print(e)
+    nlp.to_disk(out_dir / "model")
+    print(f"✔ Model saved to {out_dir / 'model'}")
 
 if __name__ == "__main__":
     p = argparse.ArgumentParser()
@@ -140,4 +69,4 @@ if __name__ == "__main__":
     p.add_argument("--val", default="data/synth/val.jsonl")
     p.add_argument("--out", default="models/extractor_ner")
     args = p.parse_args()
-    main(args.train, args.val, args.out)
+    train_ner_model(args.train, args.val, args.out)
