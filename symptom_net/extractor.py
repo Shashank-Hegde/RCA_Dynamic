@@ -35,8 +35,7 @@ if not _SPACY_PATH.exists():
 
 NER = spacy.load(str(_SPACY_PATH))
 from negspacy.negation import Negex
-NEG = Negex(language="en")
-
+NEG = Negex()
 
 # ------------------------------------------------------------------
 # ── Quick regex patterns (cheap & language‑agnostic helpers) ──────
