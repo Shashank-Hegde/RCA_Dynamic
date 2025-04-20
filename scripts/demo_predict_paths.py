@@ -18,7 +18,9 @@ extracted = extract(input_text, {})
 meta_vec = dict_to_vec(extracted).unsqueeze(0)
 
 # Load model
-model = SymptomNet(len(LEAVES), meta_vec.shape[1])
+enc_name = "distilbert-base-uncased"  # or the encoder name you used during training
+model = SymptomNet(len(LEAVES), meta_vec.shape[1], enc_name)
+#model = SymptomNet(len(LEAVES), meta_vec.shape[1])
 model = torch.load("models/symptom_net.pt", map_location="cpu")
 model.eval()
 
