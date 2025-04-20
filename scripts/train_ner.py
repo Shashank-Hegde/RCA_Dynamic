@@ -78,7 +78,7 @@ gpu_allocator = "pytorch"          # ← **required**
 
 [training.optimizer]
 @optimizers   = "Adam.v1"
-learning_rate = 5e-5
+learn_rate  = 0.0005
 
 [corpora]
 
