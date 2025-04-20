@@ -1,5 +1,9 @@
 #!/usr/bin/env python
 """Train classifier + risk regressor on JSONL."""
+
+import sys, os
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
 import json, yaml, torch, argparse, pytorch_lightning as pl
 from pathlib import Path
 from torch.utils.data import DataLoader
