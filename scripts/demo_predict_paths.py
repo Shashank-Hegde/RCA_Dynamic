@@ -44,5 +44,7 @@ with torch.no_grad():
     print(f"Risk Score    : {risk.item():.3f}")
 
     print("\nTop 5 Predictions:")
-    for i, idx in enumerate(torch.topk(probs, 5).indices):
-        print(f"  #{i+1}: {idx2leaf[idx.item()]}  ({probs[idx].item():.3f})")
+    topk = torch.topk(torch.tensor(probs), min(5, len(probs)))
+    for rank, (score, idx) in enumerate(zip(topk.values, topk.indices)):
+        print(f"  #{rank+1}: {idx2leaf[idx.item()]}  ({score.item():.3f})")
+
