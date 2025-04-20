@@ -73,7 +73,7 @@ factory = "tok2vec"
 [components.tok2vec.model.embed]
 @layers = "HashEmbed.v1"
 nO = 96
-nV = 20000  # can be adjusted based on vocab size
+nV = 20000
 
 [components.tok2vec.model.encode]
 @layers = "MaxoutWindowEncoder.v2"
