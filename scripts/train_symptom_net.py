@@ -81,7 +81,8 @@ def main():
     trainer.fit(lit, dm(tr_ds), dm(va_ds))
 
     Path("models").mkdir(exist_ok=True)
-    torch.save(lit.net.state_dict(), "models/symptom_net.pt")
+    #torch.save(lit.net.state_dict(), "models/symptom_net.pt")
+    torch.save(lit.net, "models/symptom_net.pt")  # Save the entire model
     print("✅ models/symptom_net.pt saved")
 
 if __name__ == "__main__":
