@@ -54,9 +54,6 @@ def make_config(output):
 train = "models/extractor_ner/train.spacy"
 dev = "models/extractor_ner/val.spacy"
 
-[system]
-seed = 42
-
 [nlp]
 lang = "en"
 pipeline = ["tok2vec", "ner"]
@@ -69,41 +66,32 @@ factory = "tok2vec"
 
 [components.tok2vec.model]
 @architectures = "spacy.Tok2Vec.v2"
-
-[components.tok2vec.model.embed]
-@layers = "spacy.HashEmbed.v1"
-width = 96
-rows = 20000
-attr = "ORTH"
-
-[components.tok2vec.model.encode]
-@layers = "spacy.MaxoutWindowEncoder.v1"
-width = 96
-depth = 2
-window_size = 1
-maxout_pieces = 3
+embed = {"@layers": "spacy.HashEmbed.v1", "width": 96, "rows": 5000, "attr": "ORTH"}
+encode = {"@layers": "spacy.MaxoutWindowEncoder.v1", "width": 96, "window_size": 1, "maxout_pieces": 3, "depth": 2}
 
 [components.ner]
 factory = "ner"
 
-[corpora]
-@readers = "spacy.Corpus.v1"
-
-[corpora.train]
-path = "models/extractor_ner/train.spacy"
-
-[corpora.dev]
-path = "models/extractor_ner/val.spacy"
-
 [training]
 train_corpus = "corpora.train"
 dev_corpus = "corpora.dev"
-max_epochs = 10
+seed = 42
 dropout = 0.1
+max_epochs = 10
 
 [training.optimizer]
 @optimizers = "Adam.v1"
 learn_rate = 0.0001
+
+[corpora]
+
+[corpora.train]
+@readers = "spacy.Corpus.v1"
+path = "models/extractor_ner/train.spacy"
+
+[corpora.dev]
+@readers = "spacy.Corpus.v1"
+path = "models/extractor_ner/val.spacy"
 """
     (output / "config.cfg").write_text(cfg)
 
