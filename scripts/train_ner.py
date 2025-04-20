@@ -41,21 +41,26 @@ def jsonl_to_docbin(path, nlp):
     return db
 
 def make_config(output):
-    cfg=f"""
-    [nlp]
-    lang = "en"
-    pipeline = ["tok2vec","ner"]
+    cfg = f"""
+[paths]
+train = null
+dev = null
 
-    [components.ner]
-    factory = "ner"
+[nlp]
+lang = "en"
+pipeline = ["tok2vec","ner"]
 
-    [components.tok2vec]
-    factory = "tok2vec"
-    [components.tok2vec.model]
-    @architectures = "spacy.Tok2VecTransformer.v3"
-    name = "roberta-base"
-    """
-    (output/"config.cfg").write_text(cfg)
+[components.ner]
+factory = "ner"
+
+[components.tok2vec]
+factory = "tok2vec"
+
+[components.tok2vec.model]
+@architectures = "spacy.Tok2VecTransformer.v3"
+name = "roberta-base"
+"""
+    (output / "config.cfg").write_text(cfg)
 
 def main(train_jsonl, val_jsonl, out_dir):
     out_dir=pathlib.Path(out_dir); out_dir.mkdir(exist_ok=True,parents=True)
