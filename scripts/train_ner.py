@@ -69,19 +69,19 @@ factory = "tok2vec"
 
 [components.tok2vec.model]
 @architectures = "spacy.Tok2Vec.v2"
-embed = {
-    @layers = "spacy.HashEmbed.v1"
-    width = 96
-    rows = 5000
-    attr = "ORTH"
-}
-encode = {
-    @layers = "spacy.MaxoutWindowEncoder.v1"
-    width = 96
-    depth = 2
-    window_size = 1
-    maxout_pieces = 3
-}
+
+[components.tok2vec.model.embed]
+@layers = "spacy.HashEmbed.v1"
+width = 96
+rows = 5000
+attr = "ORTH"
+
+[components.tok2vec.model.encode]
+@layers = "spacy.MaxoutWindowEncoder.v1"
+width = 96
+depth = 2
+window_size = 1
+maxout_pieces = 3
 
 [components.ner]
 factory = "ner"
@@ -105,6 +105,7 @@ path = "models/extractor_ner/train.spacy"
 path = "models/extractor_ner/val.spacy"
 """
     (output / "config.cfg").write_text(cfg)
+
 
 # ---------------------------------------------------------------------------
 # Main entry
