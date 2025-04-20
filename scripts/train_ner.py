@@ -92,22 +92,15 @@ nP = 3
 factory = "ner"
 
 [training]
-train_corpus = "corpora.train"
-dev_corpus = "corpora.dev"
 max_epochs = 10
 dropout = 0.1
 patience = 5
 
-[corpora.train]
-@readers = "spacy.Corpus.v1"
-path = "models/extractor_ner/train.spacy"
-
-[corpora.dev]
-@readers = "spacy.Corpus.v1"
-path = "models/extractor_ner/val.spacy"
+[training.optimizer]
+@optimizers = "Adam.v1"
+learn_rate = 0.0001
 """
     (output / "config.cfg").write_text(cfg)
-
 # ---------------------------------------------------------------------------
 # Main entry
 # ---------------------------------------------------------------------------
