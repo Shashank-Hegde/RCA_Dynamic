@@ -64,8 +64,15 @@ factory = "tok2vec"
 name = "roberta-base"
 tokenizer_config = {}
 transformer_config = {}
-get_spans = { @span_getters = "spacy-transformers.strided_spans.v1", window = 128, stride = 96 }
-pooling = { @layers = "spacy-transformers.TransformerPooler.v1", pooling_layer = "mean" }
+
+[components.tok2vec.model.get_spans]
+@span_getters = "spacy-transformers.strided_spans.v1"
+window = 128
+stride = 96
+
+[components.tok2vec.model.pooling]
+@layers = "spacy-transformers.TransformerPooler.v1"
+pooling_layer = "mean"
 
 [components.ner]
 factory = "ner"
