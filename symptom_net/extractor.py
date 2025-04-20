@@ -1,24 +1,3 @@
-"""
-symptom_net/extractor.py
-------------------------
-
-Turn a raw patient narrative into a structured dict whose keys are drawn
-from symptom_net.constants.CANON_KEYS.
-
-Design goals
-============
-1. 100 % offline at inference—no external LLM calls.
-2. Modular helpers so each variable can be unit‑tested or replaced.
-3. Negation‑aware for critical Boolean flags (e.g. hemoptysis: False).
-4. Fast: spaCy NER + a few regexes; < 15 ms per 400‑token input on CPU.
-
-Prerequisites
-=============
-• Trained spaCy pipeline saved in  models/extractor_ner/
-  Labels must match UPPER‑CASE forms of CANON_KEYS.
-• negspacy installed  (pip install negspacy)
-"""
-
 from __future__ import annotations
 import re, json, spacy
 from pathlib import Path
@@ -35,12 +14,10 @@ if not _SPACY_PATH.exists():
 
 NER = spacy.load(str(_SPACY_PATH))
 from negspacy.negation import Negex
-from negspacy.termsets import termset
+from negspacy.termsets import termsets
 
-NER = spacy.load(str(_SPACY_PATH))
-
-# Load the proper negation term set as a dict
-ts = termset("en_clinical")
+# Load the proper negation term set correctly from termsets
+ts = termsets["en_clinical"]
 
 NEG = Negex(
     nlp=NER,
@@ -81,9 +58,6 @@ def _num_word_to_int(w: str) -> int:
 
 
 def extract_age(text: str) -> dict:
-    """
-    Return {'age': 45} if pattern found, else {}
-    """
     m = AGE_RGX.search(text)
     if not m:
         return {}
@@ -105,32 +79,22 @@ def extract_sex(text: str) -> dict:
 
 
 def extract_durations(text: str) -> dict:
-    """
-    Map ALL duration mentions to days; use 'unspecified' key if we
-    can't link duration to a specific symptom string.
-    """
     durations = {}
     for num, unit in DURATION_RGX.findall(text):
         days = _num_word_to_int(num)
         days *= 30 if "month" in unit else 7 if "week" in unit else 1
-        # naive: single bucket
         durations["unspecified"] = max(days, durations.get("unspecified", 0))
     return {"symptom_duration_map": durations} if durations else {}
 
 
 def extract_spacy_ents(text: str) -> dict:
-    """
-    Use spaCy model to pull everything it recognizes.
-    Handles negation via negspacy for Boolean flags.
-    """
-    doc = NEG(NER(text))
+    doc = NER(text)
     result: Dict[str, Any] = {}
     for ent in doc.ents:
         key = ent.label_.lower()
         if key not in CANON_KEYS:
             continue
         if key in NEGATABLE_SYMPTOM_KEYS:
-            # store explicit Boolean
             result[key] = not ent._.negex
         else:
             if isinstance(result.get(key), list):
@@ -146,27 +110,12 @@ def extract_spacy_ents(text: str) -> dict:
 # ── Main entry point used by the rest of the pipeline ─────────────
 # ------------------------------------------------------------------
 def extract(text: str, prev: dict | None = None) -> dict:
-    """
-    Parameters
-    ----------
-    text : str
-        Raw patient utterance.
-    prev : dict
-        Already‑known extractions from previous turns.
-
-    Returns
-    -------
-    merged : dict
-        Combined {CANON_KEY: value}.
-    """
     prev = prev or {}
-    out: dict[str, Any] = {**prev}             # shallow copy
+    out: dict[str, Any] = {**prev}
 
-    # 1) spaCy NER (includes negation)
     out.update({k: v for k, v in extract_spacy_ents(text).items()
-                if k not in out})              # don't override existing
+                if k not in out})
 
-    # 2) regex fallbacks (age, sex, duration)
     for fn in (extract_age, extract_sex, extract_durations):
         for k, v in fn(text).items():
             if k not in out:
