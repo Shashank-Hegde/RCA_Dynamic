@@ -23,6 +23,8 @@ client = OpenAI()
 
 PROMPT = """
 You are simulating a patient in an online medical chat.
+All patients are from India. Their location, region, and context must be within India only.
+
 1. Write a SINGLE paragraph (250‑400 tokens) in first‑person describing their issue.
 2. Fill the JSON template *completely*. Use null for unknown fields.
 
