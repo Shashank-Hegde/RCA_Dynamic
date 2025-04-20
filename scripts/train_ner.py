@@ -46,12 +46,15 @@ def make_config(output):
 train = null
 dev = null
 
+[system]
+gpu_allocator = "pytorch"
+
 [nlp]
 lang = "en"
 pipeline = ["tok2vec","ner"]
+batch_size = 128
 
-[components.ner]
-factory = "ner"
+[components]
 
 [components.tok2vec]
 factory = "tok2vec"
@@ -59,6 +62,43 @@ factory = "tok2vec"
 [components.tok2vec.model]
 @architectures = "spacy.Tok2VecTransformer.v3"
 name = "roberta-base"
+tokenizer_config = {{}}
+transformer_config = {{}}
+pooling = {{}}
+grad_scaler_config = {{}}
+mixed_precision = false
+
+[components.ner]
+factory = "ner"
+
+[training]
+dev_corpus = "corpus.dev"
+train_corpus = "corpus.train"
+max_epochs = 10
+dropout = 0.1
+accumulate_gradient = 1
+patience = 3000
+eval_frequency = 200
+frozen_components = []
+seed = 42
+gpu_allocator = "pytorch"
+optimizer = {{"@optimizers": "Adam"}}
+
+[training.optimizer.learn_rate]
+@decay_rate = "compounding"
+initial_rate = 0.00005
+decay = 0.01
+t = 1.0
+
+[corpora]
+
+[corpora.train]
+@readers = "spacy.Corpus.v1"
+path = "models/extractor_ner/train.spacy"
+
+[corpora.dev]
+@readers = "spacy.Corpus.v1"
+path = "models/extractor_ner/val.spacy"
 """
     (output / "config.cfg").write_text(cfg)
 
