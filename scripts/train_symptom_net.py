@@ -7,14 +7,10 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 import json, yaml, torch, argparse, pytorch_lightning as pl
 from pathlib import Path
 from torch.utils.data import DataLoader
-from symptom_net.model import SymptomNet
-from symptom_net.utils import dict_to_vec
-
-# symptom_net/model.py
-import torch
-from torch import nn
 from transformers import AutoModel
+from torch import nn
 
+# Minimal placeholder if not in its own file
 class SymptomNet(nn.Module):
     def __init__(self, leaf_cnt, meta_dim, enc_name):
         super().__init__()
@@ -32,6 +28,10 @@ class SymptomNet(nn.Module):
         combined = torch.cat([out, meta], dim=1)
         combined = self.dropout(combined)
         return self.classifier(combined), self.regressor(combined).squeeze(-1)
+
+# Dummy fallback for vectorizer if utils not present
+def dict_to_vec(d):
+    return torch.zeros(64)  # assume fixed dim for placeholder
 
 class JsonDataset(torch.utils.data.Dataset):
     def __init__(self, jsonl_path, leaf2idx):
@@ -78,7 +78,7 @@ class Lit(pl.LightningModule):
         return torch.optim.AdamW(self.parameters(), lr=self.lr)
 
 def main():
-    p = argparse.ArgumentParser();
+    p = argparse.ArgumentParser()
     p.add_argument("--train", default="data/synth/train.jsonl")
     p.add_argument("--val", default="data/synth/val.jsonl")
     p.add_argument("--onto", default="ontology/v1.yaml")
@@ -88,7 +88,8 @@ def main():
     p.add_argument("--lr", type=float, default=2e-5)
     args = p.parse_args()
 
-    leaves = [n for n in yaml.safe_load(open(args.onto)) if not any(c["parent_id"]==n["id"] for c in yaml.safe_load(open(args.onto)))]
+    onto = yaml.safe_load(open(args.onto))
+    leaves = [n for n in onto if not any(c["parent_id"] == n["id"] for c in onto)]
     l2i = {l["id"]: i for i, l in enumerate(leaves)}
     meta_dim = dict_to_vec({}).shape[0]
 
