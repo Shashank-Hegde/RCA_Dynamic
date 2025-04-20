@@ -38,3 +38,87 @@
   followups:
     - q: "Does light worsen the pain?"
       asks_for: ["photophobia"]
+
+# ── abdominal pain tree ─────────────────────────────────────
+- id: abdominal_pain
+  label: "Abdominal Pain"
+  parent_id: null
+  followups:
+    - q: "Where is the pain located?"
+      asks_for: ["pain_location"]
+    - q: "Is the pain constant or does it come and go?"
+      asks_for: ["pain_pattern"]
+
+- id: abdominal_pain_upper
+  label: "Upper Abdominal Pain"
+  parent_id: abdominal_pain
+  followups:
+    - q: "Does eating affect the pain?"
+      asks_for: ["relation_to_meals"]
+    - q: "Do you experience nausea or vomiting?"
+      asks_for: ["nausea", "vomiting"]
+
+- id: abdominal_pain_lower
+  label: "Lower Abdominal Pain"
+  parent_id: abdominal_pain
+  followups:
+    - q: "Is there any change in bowel habits?"
+      asks_for: ["bowel_changes"]
+    - q: "Do you have any urinary symptoms?"
+      asks_for: ["urinary_symptoms"]
+
+# ── skin rash tree ──────────────────────────────────────────
+- id: skin_rash
+  label: "Skin Rash"
+  parent_id: null
+  followups:
+    - q: "When did the rash start?"
+      asks_for: ["onset_time"]
+    - q: "Is the rash itchy or painful?"
+      asks_for: ["itchiness", "pain"]
+
+- id: skin_rash_allergic
+  label: "Allergic Skin Rash"
+  parent_id: skin_rash
+  followups:
+    - q: "Have you been exposed to any new substances recently?"
+      asks_for: ["allergen_exposure"]
+    - q: "Do you have a history of allergies?"
+      asks_for: ["allergy_history"]
+
+- id: skin_rash_infectious
+  label: "Infectious Skin Rash"
+  parent_id: skin_rash
+  followups:
+    - q: "Do you have a fever?"
+      asks_for: ["fever"]
+    - q: "Have you been in contact with anyone with a similar rash?"
+      asks_for: ["contact_history"]
+
+# ── dizziness tree ──────────────────────────────────────────
+- id: dizziness
+  label: "Dizziness"
+  parent_id: null
+  followups:
+    - q: "Do you feel lightheaded or is the room spinning?"
+      asks_for: ["dizziness_type"]
+    - q: "When does the dizziness occur?"
+      asks_for: ["dizziness_timing"]
+
+- id: dizziness_vertigo
+  label: "Vertigo"
+  parent_id: dizziness
+  followups:
+    - q: "Is the vertigo triggered by head movements?"
+      asks_for: ["triggering_factors"]
+    - q: "Do you experience nausea or vomiting?"
+      asks_for: ["nausea", "vomiting"]
+
+- id: dizziness_presyncope
+  label: "Presyncope"
+  parent_id: dizziness
+  followups:
+    - q: "Do you feel like you're about to faint?"
+      asks_for: ["fainting_sensation"]
+    - q: "Have you actually lost consciousness?"
+      asks_for: ["loss_of_consciousness"]
