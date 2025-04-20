@@ -43,62 +43,62 @@ def jsonl_to_docbin(path, nlp):
 def make_config(output):
     cfg = """
 [paths]
-train = "models/extractor_ner/train.spacy"
-dev = "models/extractor_ner/val.spacy"
+train = \"models/extractor_ner/train.spacy\"
+dev = \"models/extractor_ner/val.spacy\"
 
 [system]
-gpu_allocator = "pytorch"
+gpu_allocator = \"pytorch\"
 seed = 42
 
 [nlp]
-lang = "en"
-pipeline = ["tok2vec", "ner"]
+lang = \"en\"
+pipeline = [\"tok2vec\", \"ner\"]
 batch_size = 128
 
 [components]
 
 [components.tok2vec]
-factory = "tok2vec"
+factory = \"tok2vec\"
 
 [components.tok2vec.model]
-@architectures = "spacy.Tok2Vec.v2"
+@architectures = \"spacy.Tok2Vec.v2\"
 
 [components.tok2vec.model.embed]
-@layers = "HashEmbed.v1"
+@layers = \"HashEmbed.v1\"
 nO = 96
 nV = 20000
 
 [components.tok2vec.model.encode]
-@layers = "chain.v1"
+@layers = \"chain.v1\"
 encode = [
-    ["expand_window.v1", {"window_size": 1}],
-    ["Maxout.v1", {"nO": 96, "nP": 3}]
+    [\"expand_window.v1\", {\"window_size\": 1}],
+    [\"Maxout.v1\", {\"nO\": 96, \"nP\": 3}]
 ]
 
 [components.ner]
-factory = "ner"
+factory = \"ner\"
 
 [corpora]
 
 [corpora.train]
-@readers = "spacy.Corpus.v1"
-path = "models/extractor_ner/train.spacy"
+@readers = \"spacy.Corpus.v1\"
+path = \"models/extractor_ner/train.spacy\"
 
 [corpora.dev]
-@readers = "spacy.Corpus.v1"
-path = "models/extractor_ner/val.spacy"
+@readers = \"spacy.Corpus.v1\"
+path = \"models/extractor_ner/val.spacy\"
 
 [training]
-train_corpus = "corpora.train"
-dev_corpus = "corpora.dev"
+train_corpus = \"corpora.train\"
+dev_corpus = \"corpora.dev\"
 max_epochs = 10
 dropout = 0.1
 patience = 5
 seed = 42
-gpu_allocator = "pytorch"
+gpu_allocator = \"pytorch\"
 
 [training.optimizer]
-@optimizers = "Adam.v1"
+@optimizers = \"Adam.v1\"
 learn_rate = 0.00005
 """
     (output / "config.cfg").write_text(cfg)
@@ -111,16 +111,16 @@ def main(train_jsonl, val_jsonl, out_dir):
     for lbl in ALL_LABELS:
         ner.add_label(lbl)
 
-    print(f"ℹ Converting JSONL to .spacy format …")
+    print(f"\u2139 Converting JSONL to .spacy format …")
     db_train = jsonl_to_docbin(train_jsonl, nlp)
     db_train.to_disk(out_dir / "train.spacy")
     db_val = jsonl_to_docbin(val_jsonl, nlp)
     db_val.to_disk(out_dir / "val.spacy")
 
-    print(f"ℹ Writing config file to {out_dir/'config.cfg'} …")
+    print(f"\u2139 Writing config file to {out_dir/'config.cfg'} …")
     make_config(out_dir)
 
-    print(f"ℹ Starting spaCy NER training on CPU")
+    print(f"\u2139 Starting spaCy NER training on CPU")
     try:
         subprocess.run([
             "python", "-m", "spacy", "train",
