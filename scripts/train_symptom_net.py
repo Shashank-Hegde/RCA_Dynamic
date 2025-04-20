@@ -82,7 +82,8 @@ def main():
     p.add_argument("--train", default="data/synth/train.jsonl")
     p.add_argument("--val", default="data/synth/val.jsonl")
     p.add_argument("--onto", default="ontology/v1.yaml")
-    p.add_argument("--enc", default="ovieNews/en_healthbert")
+    p.add_argument("--enc", default="distilbert-base-uncased")
+
     p.add_argument("--bs", type=int, default=2048)
     p.add_argument("--epochs", type=int, default=5)
     p.add_argument("--lr", type=float, default=2e-5)
