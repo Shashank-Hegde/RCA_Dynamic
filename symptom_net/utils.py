@@ -1,19 +1,17 @@
-# symptom_net/utils.py
-
 import torch
 from typing import Any
 from symptom_net.constants import CANON_KEYS
 
 def dict_to_vec(d: dict[str, Any]) -> torch.Tensor:
     vec = []
-    for key in CANON_KEYS:
-        val = d.get(key)
+    for k in CANON_KEYS:
+        val = d.get(k)
         if isinstance(val, bool):
             vec.append(float(val))
         elif isinstance(val, (int, float)):
             vec.append(float(val))
         elif isinstance(val, str):
-            vec.append(float(len(val)))
+            vec.append(1.0)
         elif isinstance(val, dict):
             vec.append(float(len(val)))
         else:
