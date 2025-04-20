@@ -43,28 +43,24 @@ def jsonl_to_docbin(path, nlp):
 def make_config(output):
     cfg = """\
 [paths]
-train = null
-dev = null
+train = "models/extractor_ner/train.spacy"
+dev = "models/extractor_ner/val.spacy"
 
 [system]
 gpu_allocator = "pytorch"
 
 [nlp]
 lang = "en"
-pipeline = ["transformer", "ner"]
+pipeline = ["tok2vec", "ner"]
 batch_size = 128
 
 [components]
 
-[components.transformer]
-factory = "transformer"
+[components.tok2vec]
+factory = "tok2vec"
 
-[components.transformer.model]
-@architectures = "spacy-transformers.TransformerModel.v3"
-name = "roberta-base"
-tokenizer_config = {}
-transformer_config = {}
-mixed_precision = true
+[components.tok2vec.model]
+@architectures = "spacy.Tok2Vec.v2"
 
 [components.ner]
 factory = "ner"
@@ -77,14 +73,7 @@ gpu_allocator = "pytorch"
 
 [training.optimizer]
 @optimizers = "Adam.v1"
-
-[training.optimizer.learn_rate]
-@decay_rate = "compounding"
-initial_rate = 0.00005
-decay = 0.01
-t = 1.0
-
-[corpora]
+learn_rate = 0.00005
 
 [corpora.train]
 @readers = "spacy.Corpus.v1"
