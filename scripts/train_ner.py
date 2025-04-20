@@ -41,7 +41,7 @@ def jsonl_to_docbin(path, nlp):
     return db
 
 def make_config(output):
-    cfg = """
+    cfg = """\
 [paths]
 train = null
 dev = null
@@ -64,8 +64,8 @@ factory = "tok2vec"
 name = "roberta-base"
 tokenizer_config = {}
 transformer_config = {}
-get_spans = { "@span_getters": "spacy-transformers.strided_spans.v1", window = 128, stride = 96 }
-pooling = { "@layers": "spacy-transformers.TransformerPooler.v1", pooling_layer = "mean" }
+get_spans = { @span_getters = "spacy-transformers.strided_spans.v1", window = 128, stride = 96 }
+pooling = { @layers = "spacy-transformers.TransformerPooler.v1", pooling_layer = "mean" }
 
 [components.ner]
 factory = "ner"
@@ -84,8 +84,6 @@ gpu_allocator = "pytorch"
 initial_rate = 0.00005
 decay = 0.01
 t = 1.0
-
-[corpora]
 
 [corpora.train]
 @readers = "spacy.Corpus.v1"
