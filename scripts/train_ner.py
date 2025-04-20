@@ -70,7 +70,7 @@ def main(train_jsonl, val_jsonl, out_dir):
                     "--output",str(out_dir),
                     "--paths.train",str(out_dir/"train.spacy"),
                     "--paths.dev",str(out_dir/"val.spacy"),
-                    "--gpu-id","0"],check=True)
+                    "--gpu-id","-1"],check=True)
 
 if __name__=="__main__":
     p=argparse.ArgumentParser()
