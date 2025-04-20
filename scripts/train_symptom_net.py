@@ -1,8 +1,15 @@
+import sys, os
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))  # 🔥 this is key
+
 import json, yaml, torch, argparse, pytorch_lightning as pl
 from pathlib import Path
 from torch.utils.data import DataLoader
+from transformers import AutoModel, AutoTokenizer
+from torch import nn
+
 from symptom_net.model import SymptomNet
 from symptom_net.utils import dict_to_vec
+from symptom_net.constants import CANON_KEYS
 
 class JsonDataset(torch.utils.data.Dataset):
     def __init__(self, jsonl_path, leaf2idx):
