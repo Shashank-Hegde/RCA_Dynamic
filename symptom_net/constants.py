@@ -1,5 +1,3 @@
-# symptom_net/constants.py
-
 CANON_KEYS = [
     # Demographics and metadata
     "age", "sex", "ethnicity", "socioeconomic_status", "location", "region",
