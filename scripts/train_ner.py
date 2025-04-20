@@ -73,7 +73,7 @@ factory = "tok2vec"
 [components.tok2vec.model.embed]
 @layers = "spacy.HashEmbed.v1"
 width = 96
-rows = 5000
+rows = 20000
 attr = "ORTH"
 
 [components.tok2vec.model.encode]
@@ -86,6 +86,15 @@ maxout_pieces = 3
 [components.ner]
 factory = "ner"
 
+[corpora]
+@readers = "spacy.Corpus.v1"
+
+[corpora.train]
+path = "models/extractor_ner/train.spacy"
+
+[corpora.dev]
+path = "models/extractor_ner/val.spacy"
+
 [training]
 train_corpus = "corpora.train"
 dev_corpus = "corpora.dev"
@@ -95,14 +104,6 @@ dropout = 0.1
 [training.optimizer]
 @optimizers = "Adam.v1"
 learn_rate = 0.0001
-
-[corpora.train]
-@readers = "spacy.Corpus.v1"
-path = "models/extractor_ner/train.spacy"
-
-[corpora.dev]
-@readers = "spacy.Corpus.v1"
-path = "models/extractor_ner/val.spacy"
 """
     (output / "config.cfg").write_text(cfg)
 
