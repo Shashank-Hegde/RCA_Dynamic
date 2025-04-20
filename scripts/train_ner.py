@@ -78,6 +78,7 @@ dev_corpus = "corpora.dev"
 seed = 42
 dropout = 0.1
 max_epochs = 10
+gpu_allocator = "pytorch"
 
 [training.optimizer]
 @optimizers = "Adam.v1"
@@ -94,6 +95,7 @@ path = "models/extractor_ner/train.spacy"
 path = "models/extractor_ner/val.spacy"
 """
     (output / "config.cfg").write_text(cfg)
+
 
 
 # ---------------------------------------------------------------------------
