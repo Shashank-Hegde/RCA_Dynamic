@@ -51,28 +51,20 @@ gpu_allocator = "pytorch"
 
 [nlp]
 lang = "en"
-pipeline = ["tok2vec", "ner"]
+pipeline = ["transformer", "ner"]
 batch_size = 128
 
 [components]
 
-[components.tok2vec]
-factory = "tok2vec"
+[components.transformer]
+factory = "transformer"
 
-[components.tok2vec.model]
-@architectures = "spacy-transformers.Tok2VecTransformer.v3"
+[components.transformer.model]
+@architectures = "spacy-transformers.TransformerModel.v3"
 name = "roberta-base"
 tokenizer_config = {}
 transformer_config = {}
-
-[components.tok2vec.model.get_spans]
-@span_getters = "spacy-transformers.strided_spans.v1"
-window = 128
-stride = 96
-
-[components.tok2vec.model.pooling]
-@layers = "spacy-transformers.TransformerPooler.v1"
-pooling_layer = "mean"
+mixed_precision = true
 
 [components.ner]
 factory = "ner"
