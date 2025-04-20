@@ -48,15 +48,18 @@ def jsonl_to_docbin(path: str, nlp) -> DocBin:
 # ---------------------------------------------------------------------------
 # Helper: write a VALID spaCy‑3 config that passes validation
 # ---------------------------------------------------------------------------
-def make_config(out_dir: pathlib.Path):
+def make_config(output):
     cfg = """\
 [paths]
 train = "models/extractor_ner/train.spacy"
-dev   = "models/extractor_ner/val.spacy"
+dev = "models/extractor_ner/val.spacy"
+
+[system]
+seed = 42
 
 [nlp]
-lang       = "en"
-pipeline   = ["tok2vec","ner"]
+lang = "en"
+pipeline = ["tok2vec", "ner"]
 batch_size = 128
 
 [components]
@@ -66,31 +69,42 @@ factory = "tok2vec"
 
 [components.tok2vec.model]
 @architectures = "spacy.Tok2Vec.v2"
+embed = {
+    @layers = "spacy.HashEmbed.v1"
+    width = 96
+    rows = 5000
+    attr = "ORTH"
+}
+encode = {
+    @layers = "spacy.MaxoutWindowEncoder.v1"
+    width = 96
+    depth = 2
+    window_size = 1
+    maxout_pieces = 3
+}
 
 [components.ner]
 factory = "ner"
 
 [training]
-max_epochs    = 10
-dropout       = 0.1
-seed          = 42
-gpu_allocator = "pytorch"          # ← **required**
+train_corpus = "corpora.train"
+dev_corpus = "corpora.dev"
+max_epochs = 10
+dropout = 0.1
 
 [training.optimizer]
-@optimizers   = "Adam.v1"
-learn_rate  = 0.0005
-
-[corpora]
+@optimizers = "Adam.v1"
+learn_rate = 0.0001
 
 [corpora.train]
 @readers = "spacy.Corpus.v1"
-path     = "${paths.train}"
+path = "models/extractor_ner/train.spacy"
 
 [corpora.dev]
 @readers = "spacy.Corpus.v1"
-path     = "${paths.dev}"
+path = "models/extractor_ner/val.spacy"
 """
-    (out_dir / "config.cfg").write_text(cfg)
+    (output / "config.cfg").write_text(cfg)
 
 # ---------------------------------------------------------------------------
 # Main entry
