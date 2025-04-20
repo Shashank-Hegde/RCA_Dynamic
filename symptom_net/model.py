@@ -3,11 +3,11 @@ import sys, os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 import torch
-from torch import nn
+import torch.nn as nn
 from transformers import AutoModel, AutoTokenizer
 
 class SymptomNet(nn.Module):
-    def __init__(self, leaf_cnt, meta_dim, enc_name="distilbert-base-uncased"):
+    def __init__(self, leaf_cnt, meta_dim, enc_name):
         super().__init__()
         self.tokenizer = AutoTokenizer.from_pretrained(enc_name)
         self.enc = AutoModel.from_pretrained(enc_name)
@@ -20,7 +20,8 @@ class SymptomNet(nn.Module):
         if next(self.parameters()).is_cuda:
             inputs = {k: v.cuda() for k, v in inputs.items()}
             meta = meta.cuda()
-        out = self.enc(**inputs).last_hidden_state[:, 0]  # CLS token
+        out = self.enc(**inputs).last_hidden_state[:, 0]  # [CLS] token representation
         combined = torch.cat([out, meta], dim=1)
         combined = self.dropout(combined)
         return self.classifier(combined), self.regressor(combined).squeeze(-1)
+
