@@ -66,7 +66,7 @@ factory = "tok2vec"
 
 [components.tok2vec.model]
 @architectures = "spacy.Tok2Vec.v2"
-embed = {"@layers": "spacy.HashEmbed.v1", "width": 96, "rows": 5000, "attr": "ORTH"}
+embed = {"@layers": "HashEmbed.v1", "width": 96, "rows": 5000, "attr": "ORTH"}
 encode = {"@layers": "spacy.MaxoutWindowEncoder.v1", "width": 96, "window_size": 1, "maxout_pieces": 3, "depth": 2}
 
 [components.ner]
