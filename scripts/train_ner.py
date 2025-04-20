@@ -54,6 +54,9 @@ def make_config(output):
 train = "models/extractor_ner/train.spacy"
 dev = "models/extractor_ner/val.spacy"
 
+[system]
+seed = 42
+
 [nlp]
 lang = "en"
 pipeline = ["tok2vec", "ner"]
@@ -66,8 +69,18 @@ factory = "tok2vec"
 
 [components.tok2vec.model]
 @architectures = "spacy.Tok2Vec.v2"
-embed = {"@layers": "HashEmbed.v1", "width": 96, "rows": 5000, "attr": "ORTH"}
-encode = {"@layers": "spacy.MaxoutWindowEncoder.v1", "width": 96, "window_size": 1, "maxout_pieces": 3, "depth": 2}
+
+[components.tok2vec.model.embed]
+@layers = "HashEmbed.v1"
+nO = 96
+nV = 5000
+
+[components.tok2vec.model.encode]
+@layers = "MaxoutWindowEncoder.v2"
+width = 96
+window_size = 1
+maxout_pieces = 3
+depth = 2
 
 [components.ner]
 factory = "ner"
@@ -75,16 +88,13 @@ factory = "ner"
 [training]
 train_corpus = "corpora.train"
 dev_corpus = "corpora.dev"
-seed = 42
-dropout = 0.1
 max_epochs = 10
-gpu_allocator = "pytorch"
+dropout = 0.1
+patience = 5
 
 [training.optimizer]
 @optimizers = "Adam.v1"
-learn_rate = 0.0001
-
-[corpora]
+learn_rate = 0.0002
 
 [corpora.train]
 @readers = "spacy.Corpus.v1"
@@ -95,8 +105,6 @@ path = "models/extractor_ner/train.spacy"
 path = "models/extractor_ner/val.spacy"
 """
     (output / "config.cfg").write_text(cfg)
-
-
 
 # ---------------------------------------------------------------------------
 # Main entry
