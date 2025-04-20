@@ -30,7 +30,7 @@ from symptom_net.constants import CANON_KEYS
 # ------------------------------------------------------------------
 # ── Load spaCy pipeline + negation detector once at import time ───
 # ------------------------------------------------------------------
-_SPACY_PATH = Path("models/extractor_ner")
+_SPACY_PATH = Path("models/extractor_ner/model")
 if not _SPACY_PATH.exists():
     raise RuntimeError("spaCy NER model not found → run train_ner.py first")
 
