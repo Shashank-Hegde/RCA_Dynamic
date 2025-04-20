@@ -10,6 +10,29 @@ from torch.utils.data import DataLoader
 from symptom_net.model import SymptomNet
 from symptom_net.utils import dict_to_vec
 
+# symptom_net/model.py
+import torch
+from torch import nn
+from transformers import AutoModel
+
+class SymptomNet(nn.Module):
+    def __init__(self, leaf_cnt, meta_dim, enc_name):
+        super().__init__()
+        self.enc = AutoModel.from_pretrained(enc_name)
+        self.dropout = nn.Dropout(0.1)
+        self.classifier = nn.Linear(self.enc.config.hidden_size + meta_dim, leaf_cnt)
+        self.regressor = nn.Linear(self.enc.config.hidden_size + meta_dim, 1)
+
+    def forward(self, texts, meta):
+        inputs = self.enc.batch_encode_plus(texts, padding=True, truncation=True, return_tensors="pt")
+        if next(self.parameters()).is_cuda:
+            inputs = {k: v.cuda() for k, v in inputs.items()}
+            meta = meta.cuda()
+        out = self.enc(**inputs).pooler_output
+        combined = torch.cat([out, meta], dim=1)
+        combined = self.dropout(combined)
+        return self.classifier(combined), self.regressor(combined).squeeze(-1)
+
 class JsonDataset(torch.utils.data.Dataset):
     def __init__(self, jsonl_path, leaf2idx):
         self.rows = [json.loads(l) for l in open(jsonl_path)]
