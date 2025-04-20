@@ -76,11 +76,17 @@ nO = 96
 nV = 20000
 
 [components.tok2vec.model.encode]
-@layers = "MaxoutWindowEncoder.v2"
-width = 96
+@layers = "chain.v1"
+
+[components.tok2vec.model.encode.layers]
+[components.tok2vec.model.encode.layers.1]
+@layers = "expand_window.v1"
 window_size = 1
-maxout_pieces = 3
-depth = 2
+
+[components.tok2vec.model.encode.layers.2]
+@layers = "Maxout.v1"
+nO = 96
+nP = 3
 
 [components.ner]
 factory = "ner"
@@ -88,17 +94,9 @@ factory = "ner"
 [training]
 train_corpus = "corpora.train"
 dev_corpus = "corpora.dev"
-seed = 42
-dropout = 0.1
 max_epochs = 10
+dropout = 0.1
 patience = 5
-gpu_allocator = "pytorch"
-
-[training.optimizer]
-@optimizers = "Adam.v1"
-learn_rate = 0.0001
-
-[corpora]
 
 [corpora.train]
 @readers = "spacy.Corpus.v1"
