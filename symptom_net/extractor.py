@@ -31,19 +31,12 @@ NER = spacy.load(str(_SPACY_PATH))
 # ───────────────────────────────────────────────────────────────────
 from negspacy.termsets import termset               # present in 0.1.x
 from negspacy.negation import Negex
+NER.add_pipe("negex", config={
+    "ent_types": ["ALL"],
+    "chunk_prefix": ["no", "not", "without", "denies"]
+}, last=True)
 
 _ts = termset("en_clinical")  # returns dict already in 0.1.x
-
-if "negex" not in NER.pipe_names:
-    NER.add_pipe(
-        "negex",
-        last=True,
-        config={
-            "neg_termset": _ts,
-            "ent_types": ["ALL"],
-            "chunk_prefix": ["no", "not", "without", "denies"],
-        },
-    )
 
 # ───────────────────────────────────────────────────────────────────
 # 2) Regex helpers (age, sex, duration)
