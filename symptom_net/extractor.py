@@ -1,8 +1,8 @@
 
+from __future__ import annotations
+
 import sys, os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-
-from __future__ import annotations
 import re, json, spacy
 from pathlib import Path
 from typing import Dict, Any
