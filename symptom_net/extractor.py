@@ -14,10 +14,9 @@ if not _SPACY_PATH.exists():
 
 NER = spacy.load(str(_SPACY_PATH))
 from negspacy.negation import Negex
-from negspacy.termsets import get_termsets
 
 # Load the proper negation term set correctly from get_termsets
-termsets = get_termsets()
+from negspacy.termsets import termsets
 ts = termsets["en_clinical"]
 
 NEG = Negex(
