@@ -54,9 +54,6 @@ def make_config(output):
 train = "models/extractor_ner/train.spacy"
 dev = "models/extractor_ner/val.spacy"
 
-[system]
-seed = 42
-
 [nlp]
 lang = "en"
 pipeline = ["tok2vec", "ner"]
@@ -92,6 +89,7 @@ nP = 3
 factory = "ner"
 
 [training]
+seed = 42
 max_epochs = 10
 dropout = 0.1
 patience = 5
