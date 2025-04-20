@@ -35,7 +35,14 @@ if not _SPACY_PATH.exists():
 
 NER = spacy.load(str(_SPACY_PATH))
 from negspacy.negation import Negex
-NEG = Negex()
+NER = spacy.load(str(_SPACY_PATH))
+NEG = Negex(nlp=NER, 
+            name="negex", 
+            neg_termset="en_clinical", 
+            ent_types=["ALL"], 
+            extension_name="negex", 
+            chunk_prefix=["no", "not", "without", "denies"])
+NER.add_pipe(NEG, last=True)
 
 # ------------------------------------------------------------------
 # ── Quick regex patterns (cheap & language‑agnostic helpers) ──────
