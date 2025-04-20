@@ -73,7 +73,7 @@ factory = "tok2vec"
 [components.tok2vec.model.embed]
 @layers = "HashEmbed.v1"
 nO = 96
-nV = 5000
+nV = 20000  # can be adjusted based on vocab size
 
 [components.tok2vec.model.encode]
 @layers = "MaxoutWindowEncoder.v2"
@@ -88,9 +88,14 @@ factory = "ner"
 [training]
 train_corpus = "corpora.train"
 dev_corpus = "corpora.dev"
+seed = 42
 max_epochs = 10
 dropout = 0.1
 patience = 5
+
+[training.optimizer]
+@optimizers = "Adam.v1"
+learn_rate = 0.0001
 
 [corpora]
 
