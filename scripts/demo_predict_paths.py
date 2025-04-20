@@ -1,4 +1,4 @@
-# scripts/demo_predict_paths.py
+# ✅ scripts/demo_predict_paths.py
 """
 Simple demo to predict full paths for multiple patient inputs
 and show model logits (trace mode) for every symptom leaf.
@@ -21,12 +21,6 @@ LEAVES = [n for n in ONTO if not any(c["parent_id"] == n["id"] for c in ONTO)]
 leaf2idx = {l["id"]: i for i, l in enumerate(LEAVES)}
 idx2leaf = {i: l["id"] for i, l in enumerate(LEAVES)}
 
-# Load trained model
-meta_dim = dict_to_vec({}).shape[0]
-model = SymptomNet(len(LEAVES), meta_dim)
-model.load_state_dict(torch.load("models/symptom_net.pt", map_location="cpu"))
-model.eval()
-
 # Sample inputs
 inputs = [
     "Hi Doctor, I’ve had a persistent fever and wet cough for 3 weeks. Recently, I noticed some blood in the sputum.",
@@ -46,6 +40,10 @@ for i, text in enumerate(inputs):
     print(f"\n===============================\nINPUT #{i+1}: {text}\n")
     extracted = extract(text, {})
     meta_vec = dict_to_vec(extracted).unsqueeze(0)
+    model = SymptomNet(len(LEAVES), meta_dim=meta_vec.shape[1])
+    model.load_state_dict(torch.load("models/symptom_net.pt", map_location="cpu"))
+    model.eval()
+
     with torch.no_grad():
         logits, risk = model([text], meta_vec)
         probs = torch.sigmoid(logits[0]).tolist()
