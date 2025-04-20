@@ -24,7 +24,6 @@ import re, json, spacy
 from pathlib import Path
 from typing import Dict, Any
 
-import negspacy
 from symptom_net.constants import CANON_KEYS
 
 # ------------------------------------------------------------------
@@ -35,7 +34,9 @@ if not _SPACY_PATH.exists():
     raise RuntimeError("spaCy NER model not found → run train_ner.py first")
 
 NER = spacy.load(str(_SPACY_PATH))
-NEG = negspacy.negspaCy.load()
+from negspacy.negation import Negex
+NEG = Negex(language="en")
+
 
 # ------------------------------------------------------------------
 # ── Quick regex patterns (cheap & language‑agnostic helpers) ──────
