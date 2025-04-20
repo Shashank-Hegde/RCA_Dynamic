@@ -62,6 +62,10 @@ factory = "tok2vec"
 [components.tok2vec.model]
 @architectures = "spacy-transformers.Tok2VecTransformer.v3"
 name = "roberta-base"
+tokenizer_config = {{}}
+transformer_config = {{}}
+get_spans = {"@annotation_spans": "spacy-transformers.strided_spans.v1"}
+pooling = {"@pooling": "mean_pooler.v1"}
 
 [components.ner]
 factory = "ner"
