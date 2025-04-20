@@ -10,3 +10,4 @@ negspacy
 pytorch-lightning>=2.2
 fastapi
 uvicorn[standard]
+argostranslate
