@@ -1,24 +1,28 @@
 #!/usr/bin/env python
+"""
+Train a lightweight spaCy NER extractor (no transformers) that recognises
+all context variables.  Works on CPU; switch --gpu‑id 0 for GPU.
+"""
 
-import spacy
-import json
-import pathlib
-import argparse
-import subprocess
+import json, pathlib, argparse, subprocess, spacy
 from spacy.tokens import DocBin
 
+
 ALL_LABELS = [
-    "AGE", "SEX", "ETHNICITY", "LOCATION", "REGION", "SOCIOECONOMIC_STATUS",
-    "PAST_CONDITIONS", "SURGERIES", "HOSPITALISATIONS", "CHRONIC_ILLNESSES",
-    "MEDICATION_HISTORY", "IMMUNISATION_STATUS", "ALLERGIES",
-    "FAMILY_HISTORY", "DIET", "PHYSICAL_ACTIVITY", "SLEEP_PATTERN",
-    "ALCOHOL", "TOBACCO", "MENTAL_HEALTH", "WORK_STRESS",
-    "ENVIRONMENTAL_EXPOSURE", "HOUSING", "CLEAN_WATER", "OCCUPATION"
+    "AGE","SEX","ETHNICITY","LOCATION","REGION","SOCIOECONOMIC_STATUS",
+    "PAST_CONDITIONS","SURGERIES","HOSPITALISATIONS","CHRONIC_ILLNESSES",
+    "MEDICATION_HISTORY","IMMUNISATION_STATUS","ALLERGIES","FAMILY_HISTORY",
+    "DIET","PHYSICAL_ACTIVITY","SLEEP_PATTERN","ALCOHOL","TOBACCO",
+    "MENTAL_HEALTH","WORK_STRESS","ENVIRONMENTAL_EXPOSURE","HOUSING",
+    "CLEAN_WATER","OCCUPATION"
 ]
 
-def jsonl_to_docbin(path, nlp):
+# ---------------------------------------------------------------------------
+# Helper: convert JSONL → spaCy DocBin
+# ---------------------------------------------------------------------------
+def jsonl_to_docbin(path: str, nlp) -> DocBin:
     db = DocBin()
-    for line in open(path):
+    for line in open(path, "r", encoding="utf-8"):
         j = json.loads(line)
         doc = nlp.make_doc(j["text"])
         spans = []
@@ -40,86 +44,102 @@ def jsonl_to_docbin(path, nlp):
         db.add(doc)
     return db
 
-def make_config(output):
+
+# ---------------------------------------------------------------------------
+# Helper: write a VALID spaCy‑3 config that passes validation
+# ---------------------------------------------------------------------------
+def make_config(out_dir: pathlib.Path):
     cfg = """\
 [paths]
-train = "models/extractor_ner/train.spacy"
-dev = "models/extractor_ner/val.spacy"
+train = "${paths.train_loc}"
+dev   = "${paths.dev_loc}"
 
 [system]
 gpu_allocator = "pytorch"
 
 [nlp]
-lang = "en"
-pipeline = ["tok2vec", "ner"]
+lang       = "en"
+pipeline   = ["tok2vec","ner"]
 batch_size = 128
 
 [components]
 
+# ---- tok2vec ----
 [components.tok2vec]
 factory = "tok2vec"
 
 [components.tok2vec.model]
 @architectures = "spacy.Tok2Vec.v2"
 
+# ---- ner ----
 [components.ner]
 factory = "ner"
 
+# ---- training ----
 [training]
 max_epochs = 10
-dropout = 0.1
-seed = 42
-gpu_allocator = "pytorch"
+dropout    = 0.1
+seed       = 42
 
 [training.optimizer]
 @optimizers = "Adam.v1"
-learn_rate = 0.00005
+learning_rate = 5e-5
+
+[corpora]
+train_loc = "models/extractor_ner/train.spacy"
+dev_loc   = "models/extractor_ner/val.spacy"
 
 [corpora.train]
 @readers = "spacy.Corpus.v1"
-path = "models/extractor_ner/train.spacy"
+path     = "${paths.train}"
 
 [corpora.dev]
 @readers = "spacy.Corpus.v1"
-path = "models/extractor_ner/val.spacy"
+path     = "${paths.dev}"
 """
-    (output / "config.cfg").write_text(cfg)
+    (out_dir / "config.cfg").write_text(cfg)
 
-def main(train_jsonl, val_jsonl, out_dir):
-    out_dir = pathlib.Path(out_dir)
-    out_dir.mkdir(exist_ok=True, parents=True)
-    nlp = spacy.blank("en")
-    ner = nlp.add_pipe("ner")
+
+# ---------------------------------------------------------------------------
+# Main entry
+# ---------------------------------------------------------------------------
+def main(train_jsonl: str, val_jsonl: str, out_dir: str):
+    out_path = pathlib.Path(out_dir)
+    out_path.mkdir(parents=True, exist_ok=True)
+
+    # Step 1: Convert to .spacy
+    blank = spacy.blank("en")
     for lbl in ALL_LABELS:
-        ner.add_label(lbl)
+        blank.add_pipe("ner", last=True) if "ner" not in blank.pipe_names else None
+        blank.get_pipe("ner").add_label(lbl)
 
-    print(f"ℹ Converting JSONL to .spacy format …")
-    db_train = jsonl_to_docbin(train_jsonl, nlp)
-    db_train.to_disk(out_dir / "train.spacy")
-    db_val = jsonl_to_docbin(val_jsonl, nlp)
-    db_val.to_disk(out_dir / "val.spacy")
+    print("ℹ Converting JSONL → DocBin …")
+    jsonl_to_docbin(train_jsonl, blank).to_disk(out_path / "train.spacy")
+    jsonl_to_docbin(val_jsonl,   blank).to_disk(out_path / "val.spacy")
 
-    print(f"ℹ Writing config file to {out_dir/'config.cfg'} …")
-    make_config(out_dir)
+    # Step 2: Write config
+    print("ℹ Writing config …")
+    make_config(out_path)
 
-    print(f"ℹ Starting spaCy NER training on CPU")
-    try:
-        subprocess.run([
-            "python", "-m", "spacy", "train",
-            str(out_dir / "config.cfg"),
-            "--output", str(out_dir),
-            "--paths.train", str(out_dir / "train.spacy"),
-            "--paths.dev", str(out_dir / "val.spacy"),
-            "--gpu-id", "-1"  # Force CPU
-        ], check=True)
-    except subprocess.CalledProcessError as e:
-        print("✘ spaCy training failed.")
-        print(e)
+    # Step 3: Train
+    print("ℹ Training spaCy NER …")
+    cmd = [
+        "python","-m","spacy","train",
+        str(out_path / "config.cfg"),
+        "--output", str(out_path),
+        "--paths.train", str(out_path / "train.spacy"),
+        "--paths.dev",   str(out_path / "val.spacy"),
+        "--gpu-id","-1"          # change to 0 for GPU
+    ]
+    subprocess.run(cmd, check=True)
+    print("✅ Training complete. Model saved to", out_path)
 
+
+# CLI -----------------------------------------------------------------------
 if __name__ == "__main__":
-    p = argparse.ArgumentParser()
-    p.add_argument("--train", default="data/synth/train.jsonl")
-    p.add_argument("--val", default="data/synth/val.jsonl")
-    p.add_argument("--out", default="models/extractor_ner")
-    a = p.parse_args()
-    main(a.train, a.val, a.out)
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--train", default="data/synth/train.jsonl")
+    ap.add_argument("--val",   default="data/synth/val.jsonl")
+    ap.add_argument("--out",   default="models/extractor_ner")
+    args = ap.parse_args()
+    main(args.train, args.val, args.out)
