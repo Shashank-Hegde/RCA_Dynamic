@@ -14,9 +14,10 @@ if not _SPACY_PATH.exists():
 
 NER = spacy.load(str(_SPACY_PATH))
 from negspacy.negation import Negex
-from negspacy.termsets import termsets
+from negspacy.termsets import get_termsets
 
-# Load the proper negation term set correctly from termsets
+# Load the proper negation term set correctly from get_termsets
+termsets = get_termsets()
 ts = termsets["en_clinical"]
 
 NEG = Negex(
@@ -31,7 +32,7 @@ NEG = Negex(
 NER.add_pipe(NEG, last=True)
 
 # ------------------------------------------------------------------
-# ── Quick regex patterns (cheap & language‑agnostic helpers) ──────
+# ── Quick regex patterns (cheap & language─agnostic helpers) ─────
 # ------------------------------------------------------------------
 AGE_RGX = re.compile(
     r"\b(?P<num>\d{1,2}|one|two|three|four|five|six|seven|eight|nine|ten)"
@@ -51,7 +52,7 @@ NEGATABLE_SYMPTOM_KEYS = {"hemoptysis", "chest_tightness"}
 
 
 # ------------------------------------------------------------------
-# ── Helper functions (one per variable group) ─────────────────────
+# ── Helper functions (one per variable group) ──────────────────────────
 # ------------------------------------------------------------------
 def _num_word_to_int(w: str) -> int:
     return int(NUM_WORD.get(w.lower(), w))
@@ -107,7 +108,7 @@ def extract_spacy_ents(text: str) -> dict:
 
 
 # ------------------------------------------------------------------
-# ── Main entry point used by the rest of the pipeline ─────────────
+# ── Main entry point used by the rest of the pipeline ──────────────────────────
 # ------------------------------------------------------------------
 def extract(text: str, prev: dict | None = None) -> dict:
     prev = prev or {}
@@ -125,7 +126,7 @@ def extract(text: str, prev: dict | None = None) -> dict:
 
 
 # ------------------------------------------------------------------
-# ── Manual CLI for quick testing ──────────────────────────────────
+# ── Manual CLI for quick testing ────────────────────────────────
 # ------------------------------------------------------------------
 if __name__ == "__main__":
     import sys, pprint
