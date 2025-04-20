@@ -41,7 +41,7 @@ def jsonl_to_docbin(path, nlp):
     return db
 
 def make_config(output):
-    cfg = f"""
+    cfg = """
 [paths]
 train = null
 dev = null
@@ -64,8 +64,8 @@ factory = "tok2vec"
 name = "roberta-base"
 tokenizer_config = {{}}
 transformer_config = {{}}
-get_spans = {"@annotation_spans": "spacy-transformers.strided_spans.v1"}
-pooling = {"@pooling": "mean_pooler.v1"}
+get_spans = {{ "@annotation_spans": "spacy-transformers.strided_spans.v1" }}
+pooling = {{ "@pooling": "mean_pooler.v1" }}
 
 [components.ner]
 factory = "ner"
