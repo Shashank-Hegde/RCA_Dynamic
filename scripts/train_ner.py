@@ -92,9 +92,7 @@ max_epochs = 10
 dropout = 0.1
 patience = 5
 
-[training.optimizer]
-@optimizers = "Adam.v1"
-learn_rate = 0.0002
+[corpora]
 
 [corpora.train]
 @readers = "spacy.Corpus.v1"
