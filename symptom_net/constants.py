@@ -1,10 +1,14 @@
+
+
+# symptom_net/constants.py
+
 CANON_KEYS = [
- "age","sex","ethnicity","socioeconomic_status","location","region",
- "past_conditions","surgeries","hospitalisations","chronic_illnesses",
- "medication_history","immunisation_status","allergies","family_history",
- "diet","physical_activity","sleep_pattern","alcohol","tobacco",
- "mental_health","work_stress","environmental_exposure","housing","clean_water",
- "occupation","max_temp","temp_measured","cough_type","chest_tightness",
- "hemoptysis","pain_location","photophobia","symptom_duration_map",
- "symptom_intensity_map"
+    # Demographics
+    "age", "sex",
+    # Symptom categories (flattened)
+    "fever", "cough", "nausea", "vomiting", "headache", "dizziness",
+    "chest_pain", "chest_tightness", "fatigue", "sore_throat",
+    "hemoptysis", "abdominal_pain", "diarrhea", "rash",
+    # Add more as needed for your ontology
+    "symptom_duration_map"
 ]
