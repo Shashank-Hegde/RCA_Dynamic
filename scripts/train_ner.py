@@ -34,7 +34,9 @@ def jsonl_to_docbin(path, nlp):
             if start==-1: continue
             end=start+len(val)
             span=doc.char_span(start,end,label=label)
-            if span: spans.append(span)
+            if span and not any(span.start < s.end and s.start < span.end for s in spans):
+                spans.append(span)
+
         doc.ents=spans; db.add(doc)
     return db
 
