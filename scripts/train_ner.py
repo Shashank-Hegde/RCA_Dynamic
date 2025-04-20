@@ -93,6 +93,7 @@ seed = 42
 max_epochs = 10
 dropout = 0.1
 patience = 5
+gpu_allocator = "pytorch"
 
 [training.optimizer]
 @optimizers = "Adam.v1"
