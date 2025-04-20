@@ -76,7 +76,7 @@ seed = 42
 gpu_allocator = "pytorch"
 
 [training.optimizer]
-@optimizers = "Adam"
+@optimizers = "Adam.v1"
 
 [training.optimizer.learn_rate]
 @decay_rate = "compounding"
