@@ -89,9 +89,10 @@ factory = "ner"
 train_corpus = "corpora.train"
 dev_corpus = "corpora.dev"
 seed = 42
-max_epochs = 10
 dropout = 0.1
+max_epochs = 10
 patience = 5
+gpu_allocator = "pytorch"
 
 [training.optimizer]
 @optimizers = "Adam.v1"
