@@ -51,11 +51,8 @@ def jsonl_to_docbin(path: str, nlp) -> DocBin:
 def make_config(out_dir: pathlib.Path):
     cfg = """\
 [paths]
-train = "${paths.train_loc}"
-dev   = "${paths.dev_loc}"
-
-[system]
-gpu_allocator = "pytorch"
+train = "models/extractor_ner/train.spacy"
+dev   = "models/extractor_ner/val.spacy"
 
 [nlp]
 lang       = "en"
@@ -64,30 +61,26 @@ batch_size = 128
 
 [components]
 
-# ---- tok2vec ----
 [components.tok2vec]
 factory = "tok2vec"
 
 [components.tok2vec.model]
 @architectures = "spacy.Tok2Vec.v2"
 
-# ---- ner ----
 [components.ner]
 factory = "ner"
 
-# ---- training ----
 [training]
-max_epochs = 10
-dropout    = 0.1
-seed       = 42
+max_epochs    = 10
+dropout       = 0.1
+seed          = 42
+gpu_allocator = "pytorch"          # ← **required**
 
 [training.optimizer]
-@optimizers = "Adam.v1"
+@optimizers   = "Adam.v1"
 learning_rate = 5e-5
 
 [corpora]
-train_loc = "models/extractor_ner/train.spacy"
-dev_loc   = "models/extractor_ner/val.spacy"
 
 [corpora.train]
 @readers = "spacy.Corpus.v1"
@@ -98,7 +91,6 @@ path     = "${paths.train}"
 path     = "${paths.dev}"
 """
     (out_dir / "config.cfg").write_text(cfg)
-
 
 # ---------------------------------------------------------------------------
 # Main entry
