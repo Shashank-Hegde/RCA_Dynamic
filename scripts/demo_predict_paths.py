@@ -19,8 +19,9 @@ meta_vec = dict_to_vec(extracted).unsqueeze(0)
 
 # Load model
 model = SymptomNet(len(LEAVES), meta_vec.shape[1])
-model.load_state_dict(torch.load("models/symptom_net.pt", map_location="cpu"))
+model = torch.load("models/symptom_net.pt", map_location="cpu")
 model.eval()
+
 
 def iter_path(leaf_id):
     path = []
