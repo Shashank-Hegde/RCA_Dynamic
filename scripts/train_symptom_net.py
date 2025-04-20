@@ -7,24 +7,25 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 import json, yaml, torch, argparse, pytorch_lightning as pl
 from pathlib import Path
 from torch.utils.data import DataLoader
-from transformers import AutoModel
+from transformers import AutoModel, AutoTokenizer
 from torch import nn
 
 # Minimal placeholder if not in its own file
 class SymptomNet(nn.Module):
     def __init__(self, leaf_cnt, meta_dim, enc_name):
         super().__init__()
+        self.tokenizer = AutoTokenizer.from_pretrained(enc_name)
         self.enc = AutoModel.from_pretrained(enc_name)
         self.dropout = nn.Dropout(0.1)
         self.classifier = nn.Linear(self.enc.config.hidden_size + meta_dim, leaf_cnt)
         self.regressor = nn.Linear(self.enc.config.hidden_size + meta_dim, 1)
 
     def forward(self, texts, meta):
-        inputs = self.enc.batch_encode_plus(texts, padding=True, truncation=True, return_tensors="pt")
+        inputs = self.tokenizer(texts, padding=True, truncation=True, return_tensors="pt")
         if next(self.parameters()).is_cuda:
             inputs = {k: v.cuda() for k, v in inputs.items()}
             meta = meta.cuda()
-        out = self.enc(**inputs).pooler_output
+        out = self.enc(**inputs).last_hidden_state[:, 0]  # [CLS] token representation
         combined = torch.cat([out, meta], dim=1)
         combined = self.dropout(combined)
         return self.classifier(combined), self.regressor(combined).squeeze(-1)
@@ -40,16 +41,14 @@ class JsonDataset(torch.utils.data.Dataset):
     def __len__(self): return len(self.rows)
     def __getitem__(self, i):
         r = self.rows[i]
-        y = torch.zeros(len(self.l2i))
-        y[self.l2i[r["label_leaf_id"]]] = 1
-        risk_val = r.get("risk", 0.0)  # Default to 0.0 if "risk" is missing
+        y = torch.zeros(len(self.l2i)); y[self.l2i[r["label_leaf_id"]]] = 1
+        risk_val = r.get("risk", 0.0)
         return {
-        "text": r["text"],
-        "meta": dict_to_vec(r["extracted"]),
-        "y": y,
-        "risk": torch.tensor(risk_val, dtype=torch.float32)
+            "text": r["text"],
+            "meta": dict_to_vec(r["extracted"]),
+            "y": y,
+            "risk": torch.tensor(risk_val, dtype=torch.float32)
         }
-
 
 def collate(batch):
     return {
@@ -86,7 +85,6 @@ def main():
     p.add_argument("--val", default="data/synth/val.jsonl")
     p.add_argument("--onto", default="ontology/v1.yaml")
     p.add_argument("--enc", default="distilbert-base-uncased")
-
     p.add_argument("--bs", type=int, default=2048)
     p.add_argument("--epochs", type=int, default=5)
     p.add_argument("--lr", type=float, default=2e-5)
@@ -102,7 +100,7 @@ def main():
     dm = lambda ds: DataLoader(ds, batch_size=args.bs, shuffle=True, collate_fn=collate)
 
     lit = Lit(args.enc, len(leaves), meta_dim, args.lr)
-    trainer = pl.Trainer(accelerator="gpu", devices=1, precision=16, max_epochs=args.epochs)
+    trainer = pl.Trainer(accelerator="gpu", devices=1, precision="16-mixed", max_epochs=args.epochs)
     trainer.fit(lit, dm(tr_ds), dm(va_ds))
 
     Path("models").mkdir(exist_ok=True)
