@@ -39,16 +39,17 @@ class JsonDataset(torch.utils.data.Dataset):
         self.l2i = leaf2idx
     def __len__(self): return len(self.rows)
     def __getitem__(self, i):
-    r = self.rows[i]
-    y = torch.zeros(len(self.l2i))
-    y[self.l2i[r["label_leaf_id"]]] = 1
-    risk_val = r.get("risk", 0.0)  # Default to 0.0 if "risk" is missing
-    return {
+        r = self.rows[i]
+        y = torch.zeros(len(self.l2i))
+        y[self.l2i[r["label_leaf_id"]]] = 1
+        risk_val = r.get("risk", 0.0)  # Default to 0.0 if "risk" is missing
+        return {
         "text": r["text"],
         "meta": dict_to_vec(r["extracted"]),
         "y": y,
         "risk": torch.tensor(risk_val, dtype=torch.float32)
-    }
+        }
+
 
 def collate(batch):
     return {
