@@ -78,6 +78,8 @@ layers = [
 [components.ner]
 factory = "ner"
 
+[corpora]
+
 [corpora.train]
 @readers = "spacy.Corpus.v1"
 path = "models/extractor_ner/train.spacy"
