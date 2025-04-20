@@ -1,133 +1,125 @@
+#!/usr/bin/env python
+"""
+Light‑weight extractor used by demo_predict_paths.py
+----------------------------------------------------
+ • Loads your trained spaCy NER from models/extractor_ner/
+ • Adds a negation detector (negspacy) in a version‑agnostic way
+ • Provides extract(text, prev={}) -> Dict[str, Any]
+"""
+
 from __future__ import annotations
-import re, json, spacy
 from pathlib import Path
 from typing import Dict, Any
+import re, spacy
 
-from symptom_net.constants import CANON_KEYS
+from symptom_net.constants import CANON_KEYS      # <-- your canonical key list
 
-# ------------------------------------------------------------------
-# ── Load spaCy pipeline + negation detector once at import time ───
-# ------------------------------------------------------------------
+# ───────────────────────────────────────────────────────────────────
+# 1) Load spaCy pipeline that you just trained
+# ───────────────────────────────────────────────────────────────────
 _SPACY_PATH = Path("models/extractor_ner/model")
 if not _SPACY_PATH.exists():
-    raise RuntimeError("spaCy NER model not found → run train_ner.py first")
-
+    raise RuntimeError(
+        "spaCy NER model not found.  Run scripts/train_ner.py first."
+    )
 NER = spacy.load(str(_SPACY_PATH))
-from negspacy.negation import Negex
 
-# Load the proper negation term set correctly from get_termsets
-from negspacy.termsets import get_termset
-ts = get_termset("en_clinical")
+# ───────────────────────────────────────────────────────────────────
+# 2) Robust negspacy initialisation for ANY released version
+# ───────────────────────────────────────────────────────────────────
+from negspacy.negation import Negex  # API unchanged across versions
+
+# fetch the English clinical term‑set; API changed between 0.1 and 0.4
+try:
+    # ≥0.4.0
+    from negspacy.termsets import get_termset
+    _ts = get_termset("en_clinical")
+except ImportError:
+    # 0.1.x – 0.3.x
+    from negspacy.termsets import termset
+    _ts = termset("en_clinical")
+
+# make sure we end up with a plain dict (Negex expects this)
+if not isinstance(_ts, dict):
+    _ts = _ts.get_patterns()
 
 NEG = Negex(
-    nlp=NER,
-    name="negex",
-    neg_termset=ts,
-    ent_types=["ALL"],
-    extension_name="negex",
-    chunk_prefix=["no", "not", "without", "denies"]
+    nlp            = NER,
+    name           = "negex",
+    neg_termset    = _ts,
+    ent_types      = ["ALL"],
+    extension_name = "negex",
+    chunk_prefix   = ["no", "not", "without", "denies"],
 )
+# add as the LAST component so we keep entities but enrich them with ._.negex
+if "negex" not in NER.pipe_names:
+    NER.add_pipe(NEG, last=True)
 
-NER.add_pipe(NEG, last=True)
+# ───────────────────────────────────────────────────────────────────
+# 3) cheap regex helpers (age / sex / durations)
+# ───────────────────────────────────────────────────────────────────
+_WORD2NUM = {"one":1,"two":2,"three":3,"four":4,"five":5,
+             "six":6,"seven":7,"eight":8,"nine":9,"ten":10}
+AGE_RGX      = re.compile(r"\b(?P<num>\d{1,2}|one|two|three|four|five|six|seven|eight|nine|ten)[-\s]*(?:yrs?|years?)[-\s]*(?:old)?\b", re.I)
+SEX_RGX      = re.compile(r"\b(male|female|man|woman)\b", re.I)
+DUR_RGX      = re.compile(r"(?P<num>\d+|one|two|three|four|five|six|seven|eight|nine|ten)\s*(?P<unit>day|days|week|weeks|month|months)", re.I)
+NEGATABLE    = {"hemoptysis", "chest_tightness"}
 
-# ------------------------------------------------------------------
-# ── Quick regex patterns (cheap & language─agnostic helpers) ─────
-# ------------------------------------------------------------------
-AGE_RGX = re.compile(
-    r"\b(?P<num>\d{1,2}|one|two|three|four|five|six|seven|eight|nine|ten)"
-    r"\s*[- ]?(year|yrs)[- ]?(old)?\b", re.I)
-NUM_WORD = {
-    "one": 1, "two": 2, "three": 3, "four": 4, "five": 5,
-    "six": 6, "seven": 7, "eight": 8, "nine": 9, "ten": 10,
-}
+def _w2n(w:str) -> int: return int(_WORD2NUM.get(w.lower(), w))
 
-DURATION_RGX = re.compile(
-    r"(?P<num>\d+|one|two|three|four|five|six|seven|eight|nine|ten)\s*"
-    r"(?P<unit>day|days|week|weeks|month|months)", re.I)
+# helper extractors ------------------------------------------------
+def _age(t:str)->dict:
+    m=AGE_RGX.search(t); 
+    return {"age": _w2n(m.group("num"))} if m else {}
 
-SEX_RGX = re.compile(r"\b(male|female|man|woman)\b", re.I)
-
-NEGATABLE_SYMPTOM_KEYS = {"hemoptysis", "chest_tightness"}
-
-
-# ------------------------------------------------------------------
-# ── Helper functions (one per variable group) ──────────────────────────
-# ------------------------------------------------------------------
-def _num_word_to_int(w: str) -> int:
-    return int(NUM_WORD.get(w.lower(), w))
-
-
-def extract_age(text: str) -> dict:
-    m = AGE_RGX.search(text)
-    if not m:
-        return {}
-    n = m.group("num")
-    age = _num_word_to_int(n)
-    try:
-        age = int(age)
-    except ValueError:
-        return {}
-    return {"age": age}
-
-
-def extract_sex(text: str) -> dict:
-    m = SEX_RGX.search(text)
-    if m:
-        sex = "male" if m.group(1).lower() in ("male", "man") else "female"
-        return {"sex": sex}
+def _sex(t:str)->dict:
+    m=SEX_RGX.search(t)
+    if m: return {"sex": "male" if m.group(1).lower() in ("male","man") else "female"}
     return {}
 
+def _dur(t:str)->dict:
+    out={}
+    for n,u in DUR_RGX.findall(t):
+        days=_w2n(n); days*=30 if "month" in u else 7 if "week" in u else 1
+        out["unspecified"]=max(days,out.get("unspecified",0))
+    return {"symptom_duration_map":out} if out else {}
 
-def extract_durations(text: str) -> dict:
-    durations = {}
-    for num, unit in DURATION_RGX.findall(text):
-        days = _num_word_to_int(num)
-        days *= 30 if "month" in unit else 7 if "week" in unit else 1
-        durations["unspecified"] = max(days, durations.get("unspecified", 0))
-    return {"symptom_duration_map": durations} if durations else {}
-
-
-def extract_spacy_ents(text: str) -> dict:
-    doc = NER(text)
-    result: Dict[str, Any] = {}
+def _ner(t:str)->dict:
+    doc=NER(t)
+    res:Dict[str,Any]={}
     for ent in doc.ents:
-        key = ent.label_.lower()
-        if key not in CANON_KEYS:
-            continue
-        if key in NEGATABLE_SYMPTOM_KEYS:
-            result[key] = not ent._.negex
+        k=ent.label_.lower()
+        if k not in CANON_KEYS: continue
+        if k in NEGATABLE:
+            res[k]=not ent._.negex
         else:
-            if isinstance(result.get(key), list):
-                result[key].append(ent.text)
-            elif key in result:
-                result[key] = [result[key], ent.text]
+            # accumulate duplicates into list
+            if k in res:
+                if isinstance(res[k], list): res[k].append(ent.text)
+                else: res[k]=[res[k],ent.text]
             else:
-                result[key] = ent.text
-    return result
+                res[k]=ent.text
+    return res
 
-
-# ------------------------------------------------------------------
-# ── Main entry point used by the rest of the pipeline ──────────────────────────
-# ------------------------------------------------------------------
-def extract(text: str, prev: dict | None = None) -> dict:
+# ───────────────────────────────────────────────────────────────────
+# 4) public function
+# ───────────────────────────────────────────────────────────────────
+def extract(text:str, prev:dict|None=None)->dict:
     prev = prev or {}
-    out: dict[str, Any] = {**prev}
+    out  = {**prev}
 
-    out.update({k: v for k, v in extract_spacy_ents(text).items()
-                if k not in out})
+    # spaCy NER + negation
+    for k,v in _ner(text).items():
+        out.setdefault(k,v)
 
-    for fn in (extract_age, extract_sex, extract_durations):
-        for k, v in fn(text).items():
-            if k not in out:
-                out[k] = v
+    # regex fall‑backs
+    for fn in (_age,_sex,_dur):
+        for k,v in fn(text).items():
+            out.setdefault(k,v)
 
     return out
 
-
-# ------------------------------------------------------------------
-# ── Manual CLI for quick testing ────────────────────────────────
-# ------------------------------------------------------------------
+# simple CLI -------------------------------------------------------
 if __name__ == "__main__":
     import sys, pprint
-    txt = sys.argv[1] if len(sys.argv) > 1 else input("Enter text: ")
-    pprint.pp(extract(txt))
+    pprint.pp(extract(" ".join(sys.argv[1:]) or input("> ")))
