@@ -16,8 +16,8 @@ NER = spacy.load(str(_SPACY_PATH))
 from negspacy.negation import Negex
 
 # Load the proper negation term set correctly from get_termsets
-from negspacy.termsets import termsets
-ts = termsets["en_clinical"]
+from negspacy.termsets import get_termset
+ts = get_termset("en_clinical")
 
 NEG = Negex(
     nlp=NER,
