@@ -85,6 +85,8 @@ initial_rate = 0.00005
 decay = 0.01
 t = 1.0
 
+[corpora]
+
 [corpora.train]
 @readers = "spacy.Corpus.v1"
 path = "models/extractor_ner/train.spacy"
