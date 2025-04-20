@@ -1,3 +1,6 @@
+import sys, os
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))  # 🔥 this is key
+
 import torch
 from typing import Any
 from symptom_net.constants import CANON_KEYS
